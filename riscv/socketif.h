@@ -14,7 +14,7 @@
 class socketif_t
 {
 public:
-  socketif_t();
+  socketif_t(int specified_port);
   ~socketif_t();
 
   std::string rin(std::ostream &sout_); // read input command string

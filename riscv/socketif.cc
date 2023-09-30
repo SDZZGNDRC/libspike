@@ -6,17 +6,24 @@
 
 #include <iostream>
 
-socketif_t::socketif_t()
+socketif_t::socketif_t(int specified_port)
 {
   try { // create socket server
     using boost::asio::ip::tcp;
     io_service_ptr = new boost::asio::io_service;
-    acceptor_ptr = new tcp::acceptor(*io_service_ptr, tcp::endpoint(tcp::v4(), 0));
-    // acceptor is created passing argument port=0, so O.S. will choose a free port
+    acceptor_ptr = new tcp::acceptor(*io_service_ptr, tcp::endpoint(tcp::v4(), specified_port));
+    // acceptor is created passing argument port=specified_port
     std::string name = boost::asio::ip::host_name();
     std::cout << "Listening for debug commands on " << name.substr(0,name.find('.'))
               << " port " << acceptor_ptr->local_endpoint().port() << " ." << std::endl;
     // at the end, add space and some other character for convenience of javascript .split(" ")
+  } catch (boost::system::system_error& e) {
+    if(e.code() == boost::asio::error::address_in_use){
+      std::cerr << "The specified port is in use. Error: " << e.what() << std::endl;
+    } else {
+      std::cerr << e.what() << std::endl;
+    }
+    exit(-1);
   } catch (std::exception& e) {
     std::cerr << e.what() << std::endl;
     exit(-1);

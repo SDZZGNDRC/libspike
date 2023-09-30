@@ -58,6 +58,9 @@ static void help(int exit_code = 1)
   fprintf(stderr, "  --extlib=<name>       Shared library to load\n");
   fprintf(stderr, "                        This flag can be used multiple times.\n");
   fprintf(stderr, "  --rbb-port=<port>     Listen on <port> for remote bitbang connection\n");
+#ifdef HAVE_BOOST_ASIO
+  fprintf(stderr, "  --socket-port=<port>  Listen on <port> for Command I/O (used with -s)\n");
+#endif
   fprintf(stderr, "  --dump-dts            Print device tree string and exit\n");
   fprintf(stderr, "  --dtb=<path>          Use specified device tree blob [default: auto-generate]\n");
   fprintf(stderr, "  --disable-dtb         Don't write the device tree blob into memory\n");
@@ -279,6 +282,17 @@ static unsigned long atoul_safe(const char* s)
   return res;
 }
 
+static int atoi_safe(const char* s)
+{
+  char* e;
+  long res = strtol(s, &e, 10);
+
+  if (*e || res < INT_MIN || res > INT_MAX)
+    help();
+
+  return static_cast<int>(res);
+}
+
 static unsigned long atoul_nonzero_safe(const char* s)
 {
   auto res = atoul_safe(s);
@@ -343,6 +357,7 @@ int main(int argc, char** argv)
   const char* dtb_file = NULL;
   uint16_t rbb_port = 0;
   bool use_rbb = false;
+  int socket_port = 0;
   unsigned dmi_rti = 0;
   reg_t blocksz = 64;
   debug_module_config_t dm_config = {
@@ -393,6 +408,9 @@ int main(int argc, char** argv)
   // I wanted to use --halted, but for some reason that doesn't work.
   parser.option('H', 0, 0, [&](const char UNUSED *s){halted = true;});
   parser.option(0, "rbb-port", 1, [&](const char* s){use_rbb = true; rbb_port = atoul_safe(s);});
+#ifdef HAVE_BOOST_ASIO
+  parser.option(0, "socket-port", 1, [&](const char UNUSED *s){socket_port = atoi_safe(s);});
+#endif
   parser.option(0, "pc", 1, [&](const char* s){cfg.start_pc = strtoull(s, 0, 0);});
   parser.option(0, "hartids", 1, [&](const char* s){
     cfg.hartids = parse_hartids(s);
@@ -527,6 +545,7 @@ int main(int argc, char** argv)
   sim_t s(&cfg, halted,
       mems, plugin_device_factories, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
       socket,
+      socket_port,
       cmd_file);
   std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
   std::unique_ptr<jtag_dtm_t> jtag_dtm(

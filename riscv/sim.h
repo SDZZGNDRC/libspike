@@ -32,6 +32,7 @@ public:
         const debug_module_config_t &dm_config, const char *log_path,
         bool dtb_enabled, const char *dtb_file,
         bool socket_enabled,
+        int socket_port,
         FILE *cmd_file); // needed for command line option --cmd
   ~sim_t();
 

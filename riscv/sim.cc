@@ -44,6 +44,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
              const char *log_path,
              bool dtb_enabled, const char *dtb_file,
              bool socket_enabled,
+             int socket_port,
              FILE *cmd_file) // needed for command line option --cmd
   : htif_t(args),
     isa(cfg->isa(), cfg->priv()),
@@ -74,7 +75,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
   socketif = NULL;
 #ifdef HAVE_BOOST_ASIO
   if (socket_enabled) {
-    socketif = new socketif_t();
+    socketif = new socketif_t(socket_port);
   }
 #else
   if (socket_enabled) {
